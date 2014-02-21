@@ -60,6 +60,14 @@
     template&lt;size_t A&gt;
     class <a href="#aligned_allocator">aligned_allocator</a>&lt;void, A&gt;;
 
+    template&lt;class T1, class T2, size_t A&gt;
+    bool operator==(const <a href="#aligned_allocator">aligned_allocator</a>&lt;T1, A&gt;&amp;,
+        const <a href="#aligned_allocator">aligned_allocator</a>&lt;T2, A&gt;&amp;);
+
+    template&lt;class T1, class T2, size_t A&gt;
+    bool operator!=(const <a href="#aligned_allocator">aligned_allocator</a>&lt;T1, A&gt;&amp;,
+        const <a href="#aligned_allocator">aligned_allocator</a>&lt;T2, A&gt;&amp;);
+
     bool <a href="#align">is_aligned</a>(size_t alignment, const void* ptr);
 }</pre>
     <h2 id="align">align</h2>
@@ -97,8 +105,9 @@
         <code>alignment</code> shall be a power of two.</p>
       <p><b>Returns:</b> The <code>aligned_alloc</code> function returns
         either a null pointer or a pointer to the allocated space.</p>
-      <p><b>Note:</b> Implementations may allocate more memory, less
-        than <code>alignment</code> bytes, for alignment purposes.</p>
+      <p><b>Note:</b> On certain platforms the space allocated may be larger
+        than <code>size</code> bytes, for alignment purposes, by an
+        additional <code>sizeof(void*) - 1 + alignment</code> bytes.</p>
     </blockquote>
     <h2 id="aligned_free">aligned_free</h2>
     <pre>void aligned_free(void* ptr);</pre>
@@ -237,6 +246,10 @@ bool operator!=(const aligned_allocator&lt;T1, A&gt;&amp;,
     <blockquote>
       <p><b>Returns:</b> <code>false</code>.</p>
     </blockquote>
+    <h3>aligned_allocator notes</h3>
+    <p>Specifying minimum alignment is generally only suitable for
+      containers such as vector and undesirable with other, node-based,
+      containers.</p>
     <h2 id="is_aligned">is_aligned</h2>
     <pre>bool is_aligned(size_t alignment, const void* ptr);</pre>
     <blockquote>
