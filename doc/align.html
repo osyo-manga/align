@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<!--
+ Copyright (c) 2014 Glen Joseph Fernandes
+ glenfe at live dot com
+
+ Distributed under the Boost Software License,
+ Version 1.0. (See accompanying file LICENSE_1_0.txt
+ or copy at http://boost.org/LICENSE_1_0.txt)
+-->
+<html>
+  <head>
+    <title>Boost.Align</title>
+    <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+    <link rel="stylesheet" type="text/css" href="style.css">
+  </head>
+  <body>
+    <h1><img height="86" alt="Boost" src="boost.png" width="277" id="logo">
+      Align</h1>
+    <h3>Glen Fernandes</h3>
+    <p>Copyright &copy; 2014 Glen Fernandes</p>
+    <p>Distributed under the Boost Software License, Version 1.0. (See
+      accompanying file LICENSE_1_0.txt or copy at
+      <a href="http://www.boost.org/LICENSE_1_0.txt">
+      http://www.boost.org/LICENSE_1_0.txt</a>)</p>
+    <p><b>Contents</b><br>
+      <a href="#introduction">Introduction</a><br>
+      <a href="#synopsis">Synopsis</a><br>
+      <a href="#align">align</a><br>
+      <a href="#aligned_alloc">aligned_alloc</a><br>
+      <a href="#aligned_free">aligned_free</a><br>
+      <a href="#aligned_allocator">aligned_allocator</a><br>
+      <a href="#is_aligned">is_aligned</a><br>
+      <a href="#examples">Examples</a><br>
+      <a href="#acknowledgments">Acknowledgments</a><br>
+      <a href="#history">History</a></p>
+    <h2 id="introduction">Introduction</h2>
+    <p>The header <a href="../include/boost/align.hpp">
+      &lt;boost/align.hpp&gt;</a> provides function <code>boost::align
+      </code> for implementations which do not have the C++11 standard
+      library function <code>std::align</code> available.</p>
+    <p>It also provides functions <code>boost::aligned_alloc</code> and
+      <code>boost::aligned_free</code>, for aligned allocation, as these
+      functions are not yet available in the C++ standard library.</p>
+    <p>It also provides a C++ allocator, class template
+      <code>boost::aligned_allocator</code>, which respects alignment and is
+      suitable for correct allocation for over-aligned types.</p>
+    <h2 id="Synopsis">Synopsis</h2>
+    <pre>namespace boost {
+    void* <a href="#align">align</a>(size_t alignment, size_t size,
+        void*&amp; ptr, size_t&amp; space);
+
+    void* <a href="#aligned_alloc">aligned_alloc</a>(size_t alignment, size_t size);
+
+    void <a href="#aligned_free">aligned_free</a>(void* ptr);
+
+    template&lt;class T,
+        size_t minimum_alignment = 1&gt;
+    class <a href="#aligned_allocator">aligned_allocator</a>;
+
+    template&lt;size_t A&gt;
+    class <a href="#aligned_allocator">aligned_allocator</a>&lt;void, A&gt;;
+
+    bool <a href="#align">is_aligned</a>(size_t alignment, const void* ptr);
+}</pre>
+    <h2 id="align">align</h2>
+    <pre>void* align(size_t alignment, size_t size,
+    void*&amp; ptr, size_t&amp; space);</pre>
+    <blockquote>
+      <p><b>Effects:</b> If it is possible to fit <code>size</code> bytes of
+        storage aligned by alignment into the buffer pointed to by
+        <code>ptr</code> with length <code>space</code>, the function
+        updates <code>ptr</code> to point to the first possible address of
+        such storage and decreases <code>space</code> by the number of bytes
+        used for alignment. Otherwise, the function does nothing.</p>
+      <p><b>Requires:</b></p>
+      <blockquote>
+        <p>&mdash; <code>alignment</code> shall be a fundamental alignment
+          value or an extended alignment value supported by the
+          implementation in this context</p>
+        <p>&mdash; <code>ptr</code> shall point to contiguous storage of at
+          least <code>space</code> bytes</p>
+      </blockquote>
+      <p><b>Returns:</b> A null pointer if the requested aligned buffer
+        would not fit into the available space, otherwise the adjusted value
+        of <code>ptr</code>.</p>
+      <p><b>Note:</b> The function updates its <code>ptr</code> and
+        <code>space</code> arguments so that it can be called repeatedly
+        with possibly different <code>alignment</code> and
+        <code>size</code> arguments for the same buffer.</p>
+    </blockquote>
+    <h2 id="aligned_alloc">aligned_alloc</h2>
+    <pre>void* aligned_alloc(size_t alignment, size_t size);</pre>
+    <blockquote>
+      <p><b>Description:</b> The <code>aligned_alloc</code> function
+        allocates space for an object whose alignment is specified by
+        <code>alignment</code>, whose size is specified by
+        <code>size</code>, and whose value is indeterminate. The value of
+        <code>alignment</code> shall be a valid alignment supported by the
+        implementation.</p>
+      <p><b>Returns:</b> The <code>aligned_alloc</code> function returns
+        either a null pointer or a pointer to the allocated space.</p>
+      <p><b>Note:</b> Implementations may allocate more memory, less
+        than <code>alignment</code> bytes, for alignment purposes.</p>
+    </blockquote>
+    <h2 id="aligned_free">aligned_free</h2>
+    <pre>void aligned_free(void* ptr);</pre>
+    <blockquote>
+      <p><b>Description:</b> The <code>aligned_free</code> function causes
+        the space pointed to by <code>ptr</code> to be deallocated, that is,
+        made available for further allocation. If <code>ptr</code> is a null
+        pointer, no action occurs. Otherwise, if the argument does not match
+        a pointer earlier returned by the <code>aligned_alloc</code>
+        function, or if the space has been deallocated by a call to
+        <code>aligned_free</code>, the behavior is undefined.</p>
+      <p><b>Returns:</b> The <code>aligned_free</code> function returns no
+        value.</p>
+    </blockquote>
+    <h2 id="aligned_allocator">aligned_allocator</h2>
+    <pre>template&lt;class T,
+    size_t minimum_alignment = 1&gt;
+class aligned_allocator;
+
+template&lt;size_t A&gt;
+class aligned_allocator&lt;void, A&gt; {
+public:
+    typedef void value_type;
+    typedef void* pointer;
+    typedef const void* const_pointer;
+
+    template &lt;class U&gt;
+    struct rebind {
+        typedef aligned_allocator&lt;U, A&gt; other;
+    };
+};
+
+template&lt;class T, size_t A&gt;
+class aligned_allocator {
+public:
+    typedef T value_type;
+    typedef T* pointer;
+    typedef const T* const_pointer;
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+    typedef T&amp; reference;
+    typedef const T&amp; const_reference;
+
+    template&lt;class U&gt;
+    struct rebind {
+        typedef aligned_allocator&lt;U, A&gt; other;
+    };
+
+    aligned_allocator();
+
+    template&lt;class U&gt;
+    aligned_allocator(const aligned_allocator&lt;U, A&gt;&amp;);
+
+    pointer address(reference x) const;
+
+    const_pointer address(const_reference x) const;
+
+    pointer allocate(size_type n,
+        aligned_allocator&lt;void, A&gt;::const_pointer = 0);
+
+    void deallocate(pointer p, size_type);
+
+    size_type max_size() const;
+
+    template&lt;class U, class... Args&gt;
+    void construct(U* memory, Args&amp;&amp;... args);
+
+    template&lt;class U&gt;
+    void destroy(U* memory);
+};</pre>
+    <h3>aligned_allocator members</h3>
+    <p>Except for the destructor, member functions of the default allocator
+    shall not introduce data races as a result of concurrent calls to those
+    member functions from different threads. Calls to these functions that
+    allocate or deallocate a particular unit of storage shall occur in a
+    single total order, and each such deallocation call shall happen before
+    the next allocation (if any) in this order.</p>
+    <pre>pointer address(reference x) const;</pre>
+    <blockquote>
+      <p><b>Returns:</b> The actual address of the object referenced by
+        <code>x</code>, even in the presence of an overloaded
+        operator&amp;.</p>
+    </blockquote>
+    <pre>const_pointer address(const_reference x) const;</pre>
+    <blockquote>
+      <p><b>Returns:</b> The actual address of the object referenced by
+        <code>x</code>, even in the presence of an overloaded
+        operator&amp;.</p>
+    </blockquote>
+    <pre>pointer allocate(size_type n,
+    aligned_allocator&lt;void, A&gt;::const_pointer = 0);</pre>
+    <blockquote>
+      <p><b>Returns:</b> A pointer to the initial element of an array of
+        storage of size <code>n * sizeof(T)</code>, aligned on the lowest
+        common multiple of the minimum alignment specified and the alignment
+        of objects of type <code>T</code>.</p>
+      <p><b>Remarks:</b> The storage is obtained by calling
+        <code>aligned_alloc</code>.</p>
+      <p><b>Throws:</b> <code>bad_alloc</code> if the storage cannot be
+        obtained.</p>
+    </blockquote>
+    <pre>void deallocate(pointer p, size_type);</pre>
+    <blockquote>
+      <p><b>Requires:</b> <code>p</code> shall be a pointer value
+        obtained from <code>allocate()</code>.</p>
+      <p><b>Effects:</b> Deallocates the storage referenced by
+        <code>memory</code>.</p>
+      <p><b>Remarks:</b> Uses <code>aligned_free</code>.</p>
+    </blockquote>
+    <pre>size_type max_size() const;</pre>
+    <blockquote>
+      <p><b>Returns:</b> The largest value <em>N</em> for which the call
+        <code>allocate(N)</code> might succeed.</p>
+    </blockquote>
+    <pre>template&lt;class U, class... Args&gt;
+void construct(U* p, Args&amp;&amp;... args);</pre>
+    <blockquote>
+      <p><b>Effects:</b> <code>::new((void*)p)
+        U(std::forward&lt;Args&gt;(args)...)</code></p>
+    </blockquote>
+    <pre>template&lt;class U&gt;
+void destroy(U* p);</pre>
+    <blockquote>
+      <p><b>Effects:</b> <code>p-&gt;~U()</code></p>
+    </blockquote>
+    <h3>aligned_allocator globals</h3>
+    <pre>template&lt;class T1, class T2, size_t A&gt;
+bool operator==(const aligned_allocator&lt;T1, A&gt;&amp;,
+    const aligned_allocator&lt;T2, A&gt;&amp;);</pre>
+    <blockquote>
+      <p><b>Returns:</b> <code>true</code>.</p>
+    </blockquote>
+    <pre>template&lt;class T2, class T2, size_t A&gt;
+bool operator!=(const aligned_allocator&lt;T1, A&gt;&amp;,
+    const aligned_allocator&lt;T2, A&gt;&amp;);</pre>
+    <blockquote>
+      <p><b>Returns:</b> <code>false</code>.</p>
+    </blockquote>
+    <h2 id="is_aligned">is_aligned</h2>
+    <pre>bool is_aligned(size_t alignment, const void* ptr);</pre>
+    <blockquote>
+      <p><b>Description:</b> The <code>is_aligned</code> function
+        determines whether the space pointed to by <code>ptr</code> has
+        alignment specified by <code>alignment</code>.</p>
+      <p><b>Returns:</b> The <code>is_aligned</code> function returns
+        <code>true</code> if and only if <code>ptr</code> points to space
+        that has alignment specified by <code>alignment</code>.</p>
+    </blockquote>
+    <h2 id="examples">Examples</h2>
+    <h3>aligned_ptr and scalar make_aligned</h3>
+    <pre>#include &lt;boost/align.hpp&gt;
+#include &lt;memory&gt;
+
+template&lt;class T&gt;
+struct aligned_delete {
+    void operator()(void* ptr) {
+        boost::aligned_free(ptr);
+    }
+};
+
+template&lt;class T&gt;
+using aligned_ptr = std::unique_ptr&lt;T,
+    aligned_delete&lt;T&gt; &gt;;
+
+template&lt;class T&gt;
+struct ptr_if {
+    typedef aligned_ptr&lt;T&gt; scalar;
+};
+
+template&lt;class T&gt;
+struct ptr_if&lt;T[]&gt; {
+    typedef aligned_ptr&lt;T&gt; array;
+};
+
+template&lt;class T, std::size_t N&gt;
+struct ptr_if&lt;T[N]&gt; {
+    typedef aligned_ptr&lt;T&gt; disable;
+};
+
+template&lt;class T, class... Args&gt;
+inline typename ptr_if&lt;T&gt;::scalar
+make_aligned(Args&amp;&amp;... args)
+{
+    void* p = boost::aligned_alloc(alignof(T),
+        sizeof(T));
+    if (!p) {
+        throw std::bad_alloc();
+    }
+    try {
+        T* q = ::new(p) T(std::forward&lt;Args&gt;(args)...);
+        return aligned_ptr&lt;T&gt;(q);
+    } catch (...) {
+        boost::aligned_free(p);
+        throw;
+    }
+}</pre>
+    <h3>aligned_vector</h3>
+    <pre>#include &lt;boost/align.hpp&gt;
+#include &lt;vector&gt;
+
+template&lt;class T, std::size_t Alignment = 1&gt;
+using aligned_vector = std::vector&lt;T,
+    boost::aligned_allocator&lt;T, Alignment&gt; &gt;;
+</pre>
+    <h2 id="acknowledgments">Acknowledgments</h2>
+    <p>Peter Dimov provided valuable feedback on the design, implementation,
+      and tests of this library.</p>
+    <p>Andrey Semashev suggested portability and design improvements.</p>
+    <h2 id="history">History</h2>
+    <p>On 19 February 2014, Glen Fernandes implemented Boost.Align.</p>
+    <hr>
+    <p>Copyright &copy; 2014 Glen Joseph Fernandes</p>
+  </body>
+</html>
