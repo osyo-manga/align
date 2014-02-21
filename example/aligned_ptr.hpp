@@ -14,9 +14,14 @@
 
 template<class T>
 struct aligned_delete {
-    void operator()(void* ptr) {
+    void operator()(T* ptr) {
+        ptr->~T();
         boost::aligned_free(ptr);
     }
+};
+
+template<class T>
+struct aligned_delete<T[]> {
 };
 
 template<class T>

@@ -10,6 +10,7 @@
 #define BOOST_ALIGN_DETAIL_ALIGNED_ALLOC_ANY_HPP
 
 #include <boost/align/align.hpp>
+#include <boost/assert.hpp>
 #include <cstdlib>
 #include <cstring>
 
@@ -19,6 +20,7 @@ namespace boost {
             inline void* aligned_alloc(std::size_t alignment,
                 std::size_t size)
             {
+                BOOST_ASSERT((alignment & (alignment - 1)) == 0);
                 std::size_t n1 = alignment - 1 + size;
                 void* p1 = 0;
                 void* p2 = std::malloc(sizeof p2 + n1);

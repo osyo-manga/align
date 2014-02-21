@@ -9,6 +9,7 @@
 #ifndef BOOST_ALIGN_DETAIL_ALIGNED_ALLOC_POSIX_HPP
 #define BOOST_ALIGN_DETAIL_ALIGNED_ALLOC_POSIX_HPP
 
+#include <boost/assert.hpp>
 #include <cstddef>
 #include <stdlib.h>
 
@@ -18,6 +19,7 @@ namespace boost {
             inline void* aligned_alloc(std::size_t alignment,
                 std::size_t size)
             {
+                BOOST_ASSERT((alignment & (alignment - 1)) == 0);
                 if (alignment < sizeof(void*)) {
                     alignment = sizeof(void*);
                 }

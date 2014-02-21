@@ -13,21 +13,19 @@
 
 template<class T>
 struct ptr_if {
-    typedef aligned_ptr<T> scalar;
+    typedef aligned_ptr<T> type;
 };
 
 template<class T>
 struct ptr_if<T[]> {
-    typedef aligned_ptr<T> array;
 };
 
 template<class T, std::size_t N>
 struct ptr_if<T[N]> {
-    typedef aligned_ptr<T> disable;
 };
 
 template<class T, class... Args>
-inline typename ptr_if<T>::scalar
+inline typename ptr_if<T>::type
 make_aligned(Args&&... args)
 {
     void* p = boost::aligned_alloc(alignof(T),

@@ -11,6 +11,7 @@
 
 #include <boost/config.hpp>
 #include <boost/align/aligned_alloc.hpp>
+#include <boost/static_assert.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 #include <boost/utility/addressof.hpp>
 #include <new>
@@ -22,6 +23,8 @@ namespace boost {
 
     template<std::size_t A>
     class aligned_allocator<void, A> {
+        BOOST_STATIC_ASSERT((A & (A - 1)) == 0);
+
     public:
         typedef void value_type;
         typedef void* pointer;
@@ -35,6 +38,8 @@ namespace boost {
 
     template<class T, std::size_t A>
     class aligned_allocator {
+        BOOST_STATIC_ASSERT((A & (A - 1)) == 0);
+
     public:
         typedef T value_type;
         typedef T* pointer;

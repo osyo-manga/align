@@ -75,8 +75,7 @@
       <p><b>Requires:</b></p>
       <blockquote>
         <p>&mdash; <code>alignment</code> shall be a fundamental alignment
-          value or an extended alignment value supported by the
-          implementation in this context</p>
+          value or an extended alignment value and a power of two</p>
         <p>&mdash; <code>ptr</code> shall point to contiguous storage of at
           least <code>space</code> bytes</p>
       </blockquote>
@@ -95,8 +94,7 @@
         allocates space for an object whose alignment is specified by
         <code>alignment</code>, whose size is specified by
         <code>size</code>, and whose value is indeterminate. The value of
-        <code>alignment</code> shall be a valid alignment supported by the
-        implementation.</p>
+        <code>alignment</code> shall be a power of two.</p>
       <p><b>Returns:</b> The <code>aligned_alloc</code> function returns
         either a null pointer or a pointer to the allocated space.</p>
       <p><b>Note:</b> Implementations may allocate more memory, less
@@ -250,15 +248,20 @@ bool operator!=(const aligned_allocator&lt;T1, A&gt;&amp;,
         that has alignment specified by <code>alignment</code>.</p>
     </blockquote>
     <h2 id="examples">Examples</h2>
-    <h3>aligned_ptr and scalar make_aligned</h3>
+    <h3>aligned_ptr and make_aligned</h3>
     <pre>#include &lt;boost/align.hpp&gt;
 #include &lt;memory&gt;
 
 template&lt;class T&gt;
 struct aligned_delete {
-    void operator()(void* ptr) {
+    void operator()(T* ptr) {
+        ptr->~T();
         boost::aligned_free(ptr);
     }
+};
+
+template&lt;class T&gt;
+struct aligned_delete&lt;T[]&gt; {
 };
 
 template&lt;class T&gt;
@@ -267,21 +270,19 @@ using aligned_ptr = std::unique_ptr&lt;T,
 
 template&lt;class T&gt;
 struct ptr_if {
-    typedef aligned_ptr&lt;T&gt; scalar;
+    typedef aligned_ptr&lt;T&gt; type;
 };
 
 template&lt;class T&gt;
 struct ptr_if&lt;T[]&gt; {
-    typedef aligned_ptr&lt;T&gt; array;
 };
 
 template&lt;class T, std::size_t N&gt;
 struct ptr_if&lt;T[N]&gt; {
-    typedef aligned_ptr&lt;T&gt; disable;
 };
 
 template&lt;class T, class... Args&gt;
-inline typename ptr_if&lt;T&gt;::scalar
+inline typename ptr_if&lt;T&gt;::type
 make_aligned(Args&amp;&amp;... args)
 {
     void* p = boost::aligned_alloc(alignof(T),

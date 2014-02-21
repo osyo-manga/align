@@ -9,7 +9,8 @@
 #ifndef BOOST_ALIGN_DETAIL_ALIGN_ANY_HPP
 #define BOOST_ALIGN_DETAIL_ALIGN_ANY_HPP
 
-#include <boost/cstdint.hpp>
+#include <boost/align/detail/cstdint.hpp>
+#include <boost/assert.hpp>
 
 namespace boost {
     namespace detail {
@@ -17,11 +18,7 @@ namespace boost {
             inline void* align(std::size_t alignment, std::size_t size,
                 void*& ptr, std::size_t& space)
             {
-#if defined(BOOST_HAS_INTPTR_T)
-                typedef boost::uintptr_t uintptr_t;
-#else
-                typedef std::size_t uintptr_t;
-#endif
+                BOOST_ASSERT((alignment & (alignment - 1)) == 0);
                 std::size_t n1 = (uintptr_t)ptr & (alignment - 1);
                 if (n1 != 0) {
                     n1 = alignment - n1;
