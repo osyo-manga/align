@@ -11,8 +11,8 @@
 
 #include <boost/align/align.hpp>
 #include <boost/assert.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 #include <cstdlib>
-#include <cstring>
 
 namespace boost {
     namespace detail {
@@ -21,13 +21,19 @@ namespace boost {
                 std::size_t size)
             {
                 BOOST_ASSERT((alignment & (alignment - 1)) == 0);
-                std::size_t n1 = alignment - 1 + size;
+                enum {
+                    N = boost::alignment_of<void*>::value
+                };
+                if (alignment < N) {
+                    alignment = N;
+                }
+                std::size_t n1 = size + alignment - 1;
                 void* p1 = 0;
-                void* p2 = std::malloc(sizeof p2 + n1);
+                void* p2 = std::malloc(n1 + sizeof p2);
                 if (p2) {
                     p1 = (char*)p2 + sizeof p2;
                     boost::align(alignment, size, p1, n1);
-                    std::memcpy((void**)p1 - 1, &p2, sizeof p2);
+                    *((void**)p1 - 1) = p2;
                 }
                 return p1;
             }
@@ -35,8 +41,7 @@ namespace boost {
             inline void aligned_free(void* ptr)
             {
                 if (ptr) {
-                    void* p1;
-                    std::memcpy(&p1, (void**)ptr - 1, sizeof p1);
+                    void* p1 = *((void**)ptr - 1);
                     std::free(p1);
                 }
             }
